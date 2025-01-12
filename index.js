@@ -1,5 +1,5 @@
 const express = require("express");
-const { poolPromise, sql } = require("./dbConfig");
+// const { poolPromise, sql } = require("./dbConfig");
 const quickbooksRoutes = require('./api/quickbooks/accounting');
 
 const app = express();
@@ -10,7 +10,7 @@ app.use('/quickbooks', quickbooksRoutes);
 
 app.get("/api/sales/dealers", async (req, res) => {
   try {
-    const pool = await poolPromise;
+    // const pool = await poolPromise;
     const result = await pool.request().query("SELECT * FROM sales.dealer");
     res.json(result.recordset);
   } catch (err) {
