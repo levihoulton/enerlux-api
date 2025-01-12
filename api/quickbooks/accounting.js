@@ -9,7 +9,7 @@ const router = express.Router();
 const oauthClient = new OAuthClient({
     clientId: process.env.CLIENT_ID, // QuickBooks OAuth2 Client ID
     clientSecret: process.env.CLIENT_SECRET, // QuickBooks OAuth2 Client Secret
-    environment: process.env.ENVIRONMENT, // 'sandbox' or 'production'
+    environment: 'production', // 'sandbox' or 'production'
     redirectUri: process.env.REDIRECT_URL // Redirect URI for OAuth callbacks
 });
 
@@ -32,7 +32,7 @@ router.get('/callback', async (req, res) => {
         // Create an OAuth token using the callback URL
         const authResponse = await oauthClient.createToken(parseRedirect);
         // Redirect to the payments route after successful authentication
-        res.redirect('/quickbooks/payments');
+        res.redirect('/quickbooks/accounting');
     } catch (e) {
         console.error('Error', e);
         res.status(500).send('Authentication failed');
@@ -40,12 +40,12 @@ router.get('/callback', async (req, res) => {
 });
 
 // Route to fetch payments data from QuickBooks
-router.get('/payments', async (req, res) => {
+router.get('/accounting', async (req, res) => {
     console.log("query paments...")
     try {
         // Make an API call to QuickBooks to fetch payments
         const response = await oauthClient.makeApiCall({
-            url: `https://sandbox-quickbooks.api.intuit.com/v3/company/123145770036639/query?query=select * from Invoice where id = '2127'&minorversion=73`,
+            url: `https://quickbooks.api.intuit.com/v3/company/123145770036639/query?query=select * from Invoice where id = '2127'&minorversion=73`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
