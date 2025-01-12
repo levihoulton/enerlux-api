@@ -55,7 +55,7 @@ router.get('/accounting', async (req, res) => {
         res.json(JSON.parse(response.body));
     } catch (e) {
         console.error(e);
-        res.status(500).send('Error fetching payments');
+        res.status(500).send(e);
     }
 });
 
