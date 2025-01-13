@@ -1,6 +1,6 @@
 const express = require("express");
 // const { poolPromise, sql } = require("./dbConfig");
-const quickbooksRoutes = require('./api/quickbooks/accounting');
+const quickbooksRoutes = require('./api/quickbooks/payments');
 
 const app = express();
 const PORT = 8080;

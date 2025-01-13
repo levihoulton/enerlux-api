@@ -42,7 +42,7 @@ router.get('/payments', async (req, res) => {
     try {
         console.log("making fetch to get payments")
         const response = await oauthClient.makeApiCall({
-            url: `https://sandbox-quickbooks.api.intuit.com/v3/company/9341453637872618/query?query=select * from Payment&minorversion=40`,
+            url: `https://quickbooks.api.intuit.com/v3/company/9341453637872618/query?query=select * from Payment&minorversion=40`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
