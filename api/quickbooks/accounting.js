@@ -44,24 +44,42 @@ router.get('/callback', async (req, res) => {
 });
 
 router.get('/payments', async (req, res) => {
-    console.log(baseURL + companyID)
-    console.log("making fetch to get payments")
+    console.log(`${baseURL}/v3/company/${companyID}/query?query=select * from Payment&minorversion=40`)
     try {
         const response = await oauthClient.makeApiCall({
-            url: baseURL + `/v3/company/` + companyID + `/query?query=select * from Payment&minorversion=40`,
+            url: `${baseURL}/v3/company/${companyID}/query?query=select * from Payment&minorversion=40`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-        // Send the fetched data as JSON response
-        console.log(response?.response)
-        res.json(JSON.parse(response?.response));
+
+        // Log the full response to inspect it
+        console.log('API Response:', response);
+
+        // Assuming the response contains a data field with JSON content
+        const parsedResponse = response.data ? JSON.parse(response.data) : null;
+
+        // Log parsed data if available
+        if (parsedResponse) {
+            console.log('Parsed Response:', parsedResponse.data);
+        }
+
+        // Check for any errors in the parsed response status
+        if (parsedResponse && parsedResponse.status !== 200) {
+            console.error('Failed to fetch data:', parsedResponse.statusText);
+            return res.status(400).json({ error: 'Failed to fetch data', details: parsedResponse.statusText });
+        }
+
+        const queryResponse = response?.json?.QueryResponse;
+        console.log(queryResponse);
+        res.json(queryResponse); // Assuming 'data' contains the desired response data
     } catch (e) {
-        console.error(e);
-        res.json(JSON.parse(e));
+        console.error('Error in payments API call:', e);
+        res.status(500).json({ error: 'Error making payments API call', details: e });
     }
 });
+
 
 
 module.exports = router;
