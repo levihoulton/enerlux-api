@@ -45,7 +45,7 @@ router.get('/accounting', async (req, res) => {
     try {
         // Make an API call to QuickBooks to fetch payments
         const response = await oauthClient.makeApiCall({
-            url: `https://quickbooks.api.intuit.com/v3/company/123145770036639/query?query=select * from Invoice where id = '2127'&minorversion=73`,
+            url: `https://quickbooks.api.intuit.com/v3/company/123145770036639/query?query=select * from Payment&minorversion=73`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -55,7 +55,7 @@ router.get('/accounting', async (req, res) => {
         res.json(JSON.parse(response.body));
     } catch (e) {
         console.error(e);
-        res.status(500).send(e);
+        res.status(500).send('Error fetching payments', e);
     }
 });
 
