@@ -53,11 +53,12 @@ router.get('/accounting', async (req, res) => {
         
         // Log the entire response for debugging
         console.log('QuickBooks API Response:', response);
-        console.log(response?.data);
+        console.log(response);
+        console.log(response?.QueryResponse);
         
         // Parse and send the fetched data as JSON response
-        if (response && response.body) {
-            res.json(JSON.parse(response.body));
+        if (response && response.QueryResponse) {
+            res.json(JSON.parse(response.QueryResponse));
         } else {
             throw new Error("Response body is undefined");
         }
