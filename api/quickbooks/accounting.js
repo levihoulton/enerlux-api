@@ -13,35 +13,31 @@ const oauthClient = new OAuthClient({
     redirectUri: process.env.REDIRECT_URL // Redirect URI for OAuth callbacks
 });
 
+// Route to initiate the OAuth flow
 router.get('/auth', (req, res) => {
+    // Generate the authorization URL for QuickBooks
     const authUri = oauthClient.authorizeUri({
         scope: [OAuthClient.scopes.Accounting, OAuthClient.scopes.OpenId],
-        state: 'CSRF_12345' // Dynamically generate or securely define this
+        state: 'Init' // State to protect against CSRF attacks
     });
+    // Redirect user to the QuickBooks authorization page
     res.redirect(authUri);
 });
 
-
+// Callback route for handling the response from QuickBooks
 router.get('/callback', async (req, res) => {
+    const parseRedirect = req.url;
+
     try {
-        if (req.query.state !== 'CSRF_12345') {
-            throw new Error('Invalid state parameter');
-        }
-
-        const authResponse = await oauthClient.createToken(req.originalUrl);
-
-        // Persist the token for future API calls
-        const tokenData = authResponse.getJson();
-        console.log('OAuth Token:', tokenData);
-        // Save tokenData securely here
-
+        // Create an OAuth token using the callback URL
+        const authResponse = await oauthClient.createToken(parseRedirect);
+        // Redirect to the payments route after successful authentication
         res.redirect('/quickbooks/accounting');
     } catch (e) {
-        console.error('Authentication error:', e);
+        console.error('Error', e);
         res.status(500).send('Authentication failed');
     }
 });
-
 
 router.get('/accounting', async (req, res) => {
     console.log("Querying payments...");
@@ -81,8 +77,6 @@ router.get('/accounting', async (req, res) => {
         res.status(500).send('Error fetching payments');
     }
 });
-
-
 
 
 module.exports = router;
