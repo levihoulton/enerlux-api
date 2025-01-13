@@ -32,7 +32,7 @@ router.get('/callback', async (req, res) => {
         // Create an OAuth token using the callback URL
         const authResponse = await oauthClient.createToken(parseRedirect);
         // Redirect to the payments route after successful authentication
-        res.redirect('/payments');
+        res.redirect('quickbooks/payments');
     } catch (e) {
         console.error('Error', e);
     }
