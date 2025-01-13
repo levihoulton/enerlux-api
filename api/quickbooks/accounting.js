@@ -53,6 +53,7 @@ router.get('/accounting', async (req, res) => {
         
         // Log the entire response for debugging
         console.log('QuickBooks API Response:', response);
+        console.log(response?.data);
         
         // Parse and send the fetched data as JSON response
         if (response && response.body) {
