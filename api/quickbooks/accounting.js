@@ -54,7 +54,10 @@ router.get('/accounting', async (req, res) => {
         const response = await oauthClient.makeApiCall({
             url: `https://quickbooks.api.intuit.com/v3/company/123145770036639/query?query=select * from Payment&minorversion=73`,
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${oauthClient.getToken().access_token}`
+            }
         });
 
         console.log('QuickBooks API Response:', {
@@ -63,10 +66,9 @@ router.get('/accounting', async (req, res) => {
             body: response.body
         });
 
-        if (response && response.body) {
-            res.json(JSON.parse(response.body));
-        } else {
-            throw new Error("Response body is undefined");
+        if (!response || !response.body) {
+            console.error('API call failed:', response);
+            throw new Error('Failed to fetch payments, empty response body');
         }
     } catch (e) {
         console.error('Error fetching payments:', e);
