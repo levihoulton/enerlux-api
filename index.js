@@ -1,9 +1,9 @@
 const express = require("express");
 // const { poolPromise, sql } = require("./dbConfig");
-const quickbooksRoutes = require('./api/quickbooks/payments');
+const quickbooksRoutes = require('./api/quickbooks/accounting');
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.ENVIRONMENT === 'sandbox' ? 5000 : 8080;
 
 // Use QuickBooks routes
 app.use('/quickbooks', quickbooksRoutes);
