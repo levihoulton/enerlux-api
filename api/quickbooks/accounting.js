@@ -52,7 +52,7 @@ router.get('/accounting', async (req, res) => {
         }
 
         const response = await oauthClient.makeApiCall({
-            url: `https://quickbooks.api.intuit.com/v3/company/123145770036639/payment?operation=update&include=void&minorversion=73`,
+            url: `https://quickbooks.api.intuit.com/v3/company/9341453637872618/reports/CustomerSales?customer=customer&start_date=2015-08-01&end_date=2025-01-13&minorversion=73`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
