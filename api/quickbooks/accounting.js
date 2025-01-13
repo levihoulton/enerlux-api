@@ -39,9 +39,8 @@ router.get('/callback', async (req, res) => {
     }
 });
 
-// Route to fetch payments data from QuickBooks
 router.get('/accounting', async (req, res) => {
-    console.log("query paments...")
+    console.log("query payments...");
     try {
         // Make an API call to QuickBooks to fetch payments
         const response = await oauthClient.makeApiCall({
@@ -51,13 +50,22 @@ router.get('/accounting', async (req, res) => {
                 'Content-Type': 'application/json'
             }
         });
-        // Send the fetched data as JSON response
-        res.json(JSON.parse(response.body));
+        
+        // Log the entire response for debugging
+        console.log('QuickBooks API Response:', response);
+        
+        // Parse and send the fetched data as JSON response
+        if (response && response.body) {
+            res.json(JSON.parse(response.body));
+        } else {
+            throw new Error("Response body is undefined");
+        }
     } catch (e) {
-        console.error(e);
-        res.status(500).send('Error fetching payments', e);
+        console.error('Error fetching payments:', e);
+        res.status(500).send('Error fetching payments');
     }
 });
+
 
 module.exports = router;
 
