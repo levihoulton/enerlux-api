@@ -32,49 +32,26 @@ router.get('/callback', async (req, res) => {
         // Create an OAuth token using the callback URL
         const authResponse = await oauthClient.createToken(parseRedirect);
         // Redirect to the payments route after successful authentication
-        res.redirect('/quickbooks/accounting');
+        res.redirect('/payments');
     } catch (e) {
         console.error('Error', e);
-        res.status(500).send('Authentication failed');
     }
 });
 
-router.get('/accounting', async (req, res) => {
-    console.log("Querying payments...");
+router.get('/payments', async (req, res) => {
     try {
-        // Ensure token is valid before making API call
-        if (!oauthClient.isAccessTokenValid()) {
-            throw new Error('OAuth token expired or invalid');
-        }
-
+        console.log("making fetch to get payments")
         const response = await oauthClient.makeApiCall({
-            url: `https://quickbooks.api.intuit.com/v3/company/9341453637872618/reports/CustomerSales?customer=customer&start_date=2015-08-01&end_date=2025-01-13&minorversion=73`,
+            url: `https://sandbox-quickbooks.api.intuit.com/v3/company/9341453637872618/query?query=select * from Payment&minorversion=40`,
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${oauthClient.getToken().access_token}`
+                'Content-Type': 'application/json'
             }
         });
-
-        // Log the full response (status, headers, body)
-        console.log('QuickBooks API Response:', {
-            status: response?.status,
-            headers: response?.headers,
-            body: response?.body
-        });
-
-        if (!response || !response.body || !response.body.QueryResponse) {
-            console.error('API call failed:', response);
-            throw new Error('Failed to fetch payments, empty QueryResponse');
-        }
-
-        console.log('QueryResponse:', response.body.QueryResponse);
-
-        res.json(response.body.QueryResponse);
-
+        // Send the fetched data as JSON response
+        res.json(JSON.parse(response.body));
     } catch (e) {
-        console.error('Error fetching payments:', e);
-        res.status(500).send('Error fetching payments');
+        console.error(e);
     }
 });
 
