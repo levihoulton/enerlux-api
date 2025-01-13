@@ -44,7 +44,7 @@ router.get('/accounting', async (req, res) => {
     try {
         // Make an API call to QuickBooks to fetch payments
         const response = await oauthClient.makeApiCall({
-            url: `https://quickbooks.api.intuit.com/v3/company/123145770036639/query?query=select * from Payment&minorversion=73`,
+            url: `https://quickbooks.api.intuit.com/v3/company/123145770036639/query?query=select * from Payment Where Metadata.LastUpdatedTime>'2015-01-16' Order By Metadata.LastUpdatedTime&minorversion=73`,
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
