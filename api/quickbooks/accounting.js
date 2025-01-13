@@ -60,21 +60,28 @@ router.get('/accounting', async (req, res) => {
             }
         });
 
+        // Log the full response (status, headers, body)
         console.log('QuickBooks API Response:', {
-            status: response.status,
-            headers: response.headers,
-            body: response.body
+            status: response?.status,
+            headers: response?.headers,
+            body: response?.body
         });
 
-        if (!response || !response.body) {
+        if (!response || !response.body || !response.body.QueryResponse) {
             console.error('API call failed:', response);
-            throw new Error('Failed to fetch payments, empty response body');
+            throw new Error('Failed to fetch payments, empty QueryResponse');
         }
+
+        console.log('QueryResponse:', response.body.QueryResponse);
+
+        res.json(response.body.QueryResponse);
+
     } catch (e) {
         console.error('Error fetching payments:', e);
         res.status(500).send('Error fetching payments');
     }
 });
+
 
 
 
