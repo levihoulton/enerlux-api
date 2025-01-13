@@ -50,18 +50,19 @@ router.get('/accounting', async (req, res) => {
                 'Content-Type': 'application/json'
             }
         });
+        console.log("done.")
         
-        // Log the entire response for debugging
-        console.log('QuickBooks API Response:', response);
-        console.log(response);
-        console.log(response?.QueryResponse);
+        // // Log the entire response for debugging
+        // console.log('QuickBooks API Response:', response);
+        // console.log(response);
+        // console.log(response?.QueryResponse);
         
-        // Parse and send the fetched data as JSON response
-        if (response && response.QueryResponse) {
-            res.json(JSON.parse(response.QueryResponse));
-        } else {
-            throw new Error("Response body is undefined");
-        }
+        // // Parse and send the fetched data as JSON response
+        // if (response && response.QueryResponse) {
+        //     res.json(JSON.parse(response.QueryResponse));
+        // } else {
+        //     throw new Error("Response body is undefined");
+        // }
     } catch (e) {
         console.error('Error fetching payments:', e);
         res.status(500).send('Error fetching payments');
