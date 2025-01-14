@@ -54,26 +54,15 @@ router.get('/payments', async (req, res) => {
             }
         });
 
-        // Log the full response to inspect it
-        console.log('API Response:', response);
-
-        // Assuming the response contains a data field with JSON content
         const parsedResponse = response.data ? JSON.parse(response.data) : null;
 
-        // Log parsed data if available
-        if (parsedResponse) {
-            console.log('Parsed Response:', parsedResponse.data);
-        }
-
-        // Check for any errors in the parsed response status
         if (parsedResponse && parsedResponse.status !== 200) {
             console.error('Failed to fetch data:', parsedResponse.statusText);
             return res.status(400).json({ error: 'Failed to fetch data', details: parsedResponse.statusText });
         }
 
         const queryResponse = response?.json?.QueryResponse;
-        console.log(queryResponse);
-        res.json(queryResponse); // Assuming 'data' contains the desired response data
+        res.json(queryResponse); 
     } catch (e) {
         console.error('Error in payments API call:', e);
         res.status(500).json({ error: 'Error making payments API call', details: e });
