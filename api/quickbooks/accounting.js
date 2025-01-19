@@ -83,16 +83,31 @@ router.get('/payments', async (req, res) => {
                 break; // Exit loop if no more payments to fetch
             }
 
-            const paymentObjects = payments.map((payment, index) => ({
-                index: index,
-                PaymentKey: payment.Id,
-                OrderNumber: payment.Line?.[0]?.LineEx?.any?.[2]?.value?.Value || null,
-                CustomerRef: payment.CustomerRef?.name || null,
-                PaymentDate: payment.TxnDate || null,
-                PaymentAmount: parseFloat(payment.TotalAmt) || 0,
-                PaymentNote: payment.PrivateNote || '',
-                LastUpdatedTime: payment.MetaData?.LastUpdatedTime || null
-            }));
+            const paymentObjects = payments.map((payment, index) => {
+                // Find the OrderNumber dynamically by filtering based on the scope
+                const orderNumber = payment.Line?.[0]?.LineEx?.any?.find(
+                  (item) => item.scope === "javax.xml.bind.JAXBElement$GlobalScope" && item.value?.Name === "txnReferenceNumber"
+                )?.value?.Value || null;
+            
+                // Only return the payment if the orderNumber is found
+                if (!orderNumber) {
+                  return null; // Return null if OrderNumber is not found
+                }
+            
+                return {
+                  index: index,
+                  PaymentKey: payment.Id,
+                  OrderNumber: orderNumber,
+                  CustomerRef: payment.CustomerRef?.name || null,
+                  PaymentDate: payment.TxnDate || null,
+                  PaymentAmount: parseFloat(payment.TotalAmt) || 0,
+                  PaymentNote: payment.PrivateNote || '',
+                  LastUpdatedTime: payment.MetaData?.LastUpdatedTime || null
+                };
+              })
+              .filter(payment => payment !== null);  // Filter out null entries
+            
+            console.log(paymentObjects);
 
             allPayments = allPayments.concat(paymentObjects);
 
