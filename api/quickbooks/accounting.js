@@ -88,6 +88,8 @@ router.get('/payments', async (req, res) => {
                 const orderNumber = payment.Line?.[0]?.LineEx?.any?.find(
                   (item) => item.scope === "javax.xml.bind.JAXBElement$GlobalScope" && item.value?.Name === "txnReferenceNumber"
                 )?.value?.Value || null;
+                console.log(orderNumber)
+                console.log(payment)
             
                 // Only return the payment if the orderNumber is found
                 if (!orderNumber) {
