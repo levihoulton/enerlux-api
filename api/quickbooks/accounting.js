@@ -2,6 +2,7 @@
 require('dotenv').config();
 const express = require('express');
 const OAuthClient = require('intuit-oauth');
+const { insertPaymentsToDatabase, getLatestPaymentsFromDatabase } = require('../../utils/payments');
 
 const router = express.Router();
 const baseURL = (process.env.ENVIRONMENT === 'sandbox' ? 'https://sandbox-quickbooks.api.intuit.com' : 'https://quickbooks.api.intuit.com');
@@ -44,31 +45,69 @@ router.get('/callback', async (req, res) => {
 });
 
 router.get('/payments', async (req, res) => {
-    console.log(`${baseURL}/v3/company/${companyID}/query?query=select * from Payment&minorversion=40`)
     try {
-        const response = await oauthClient.makeApiCall({
-            url: `${baseURL}/v3/company/${companyID}/query?query=select * from Payment&minorversion=40`,
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
+        // Get the latest payment update time from the database
+        const latestUpdateTime = await getLatestPaymentsFromDatabase();
+
+        let startPosition = 1; // Starting position for pagination
+        const pageSize = 100; // QuickBooks API fetches 100 records at a time
+        let allPayments = [];
+
+        // Loop to handle pagination and fetch payments in chunks
+        while (true) {
+            const query = 
+                "select * from Payment "+
+                "Where Metadata.LastUpdatedTime > '" +latestUpdateTime +
+                "' Order By Metadata.LastUpdatedTime DESC " +
+                "STARTPOSITION " +startPosition + " MAXRESULTS " + pageSize
+            // const query = "select * from Payment Where Metadata.LastUpdatedTime> '2015-01-16'"
+
+            const response = await oauthClient.makeApiCall({
+                url: `${baseURL}/v3/company/${companyID}/query?query=${encodeURIComponent(query)}`,
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const parsedResponse = response.data ? JSON.parse(response.data) : null;
+
+            if (parsedResponse && parsedResponse.status !== 200) {
+                console.error('Failed to fetch data:', parsedResponse.statusText);
+                return res.status(400).json({ error: 'Failed to fetch data', details: parsedResponse.statusText });
             }
-        });
 
-        const parsedResponse = response.data ? JSON.parse(response.data) : null;
+            const payments = response?.json?.QueryResponse?.Payment || [];
 
-        if (parsedResponse && parsedResponse.status !== 200) {
-            console.error('Failed to fetch data:', parsedResponse.statusText);
-            return res.status(400).json({ error: 'Failed to fetch data', details: parsedResponse.statusText });
+            if (payments.length === 0) {
+                break; // Exit loop if no more payments to fetch
+            }
+
+            const paymentObjects = payments.map((payment, index) => ({
+                index: index,
+                PaymentKey: payment.Id,
+                OrderNumber: payment.Line?.[0]?.LineEx?.any?.[2]?.value?.Value || null,
+                CustomerRef: payment.CustomerRef?.name || null,
+                PaymentDate: payment.TxnDate || null,
+                PaymentAmount: parseFloat(payment.TotalAmt) || 0,
+                PaymentNote: payment.PrivateNote || '',
+                LastUpdatedTime: payment.MetaData?.LastUpdatedTime || null
+            }));
+
+            allPayments = allPayments.concat(paymentObjects);
+
+            // Increment startPosition for the next page of results
+            startPosition += pageSize;
         }
 
-        const queryResponse = response?.json?.QueryResponse;
-        res.json(queryResponse); 
+        // Insert all fetched payments into the database
+        await insertPaymentsToDatabase(allPayments);
+
+        res.status(200).json({ message: 'Payments successfully imported into the database.' });
     } catch (e) {
-        console.error('Error in payments API call:', e);
-        res.status(500).json({ error: 'Error making payments API call', details: e });
+        console.error('Error in payments API call or database operation:', e);
+        res.status(500).json({ error: 'Error processing payments', details: e.message });
     }
 });
-
-
 
 module.exports = router;
