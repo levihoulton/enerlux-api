@@ -5,7 +5,7 @@ const { format } = require('date-fns');
 // Function to insert payments into the PaymentImport table
 async function insertPaymentsToDatabase(payments) {
     const query = `
-    INSERT INTO enerlux.PaymentImport (
+    INSERT INTO enerlux.sales.PaymentImport (
         PaymentKey, OrderNumber, CustomerRef, PaymentDate, PaymentAmount, PaymentNote, LastUpdatedTime
     )
     VALUES (?, ?, ?, ?, ?, ?, ?)
