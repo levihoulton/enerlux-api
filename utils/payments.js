@@ -28,22 +28,25 @@ async function insertPaymentsToDatabase(payments) {
         await transaction.begin();
 
         for (const payment of payments) {
-            const request = transaction.request(); // Create a new request for each payment
-            request.input('PaymentKey', payment.PaymentKey);
-            request.input('OrderNumber', payment.OrderNumber);
-            request.input('CustomerRef', payment.CustomerRef);
-            request.input('PaymentDate', payment.PaymentDate);
-            request.input('PaymentAmount', payment.PaymentAmount);
-            request.input('PaymentNote', payment.PaymentNote);
-            request.input('LastUpdatedTime', payment.LastUpdatedTime);
+            if (payment.OrderNumber){
+                const request = transaction.request(); // Create a new request for each payment
+                request.input('PaymentKey', payment.PaymentKey);
+                request.input('OrderNumber', payment.OrderNumber);
+                request.input('CustomerRef', payment.CustomerRef);
+                request.input('PaymentDate', payment.PaymentDate);
+                request.input('PaymentAmount', payment.PaymentAmount);
+                request.input('PaymentNote', payment.PaymentNote);
+                request.input('LastUpdatedTime', payment.LastUpdatedTime);
 
-            await request.query(query); // Execute the query
+                await request.query(query); // Execute the query
+            }
         }
 
         await transaction.commit(); // Commit the transaction
         connection.close(); // Close the connection
         return true; // Return success
     } catch (err) {
+        connection.close(); // Close the connection
         console.error('Error inserting payments into database:', err);
         throw err; // Throw error to be caught in the route
     }
