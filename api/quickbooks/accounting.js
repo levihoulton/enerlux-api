@@ -44,23 +44,40 @@ router.get('/callback', async (req, res) => {
     }
 });
 
+
 router.get('/payments', async (req, res) => {
     try {
+        // Access token passed as a query parameter or header
+        const accessToken = req.headers['authorization'] || req.query.accessToken;
+        
+        if (!accessToken) {
+            return res.status(400).json({ error: 'Access token is required.' });
+        }
+
+        // Create an OAuthClient instance using the access token
+        const oauthClient = new OAuthClient({
+            clientId: process.env.CLIENT_ID,
+            clientSecret: process.env.CLIENT_SECRET,
+            environment: process.env.ENVIRONMENT,
+            redirectUri: process.env.REDIRECT_URL,
+        });
+        
+        // Set the access token on the OAuthClient
+        oauthClient.setToken({ access_token: accessToken });
+
         // Get the latest payment update time from the database
         const latestUpdateTime = await getLatestPaymentsFromDatabase();
 
-        let startPosition = 1; // Starting position for pagination
-        const pageSize = 100; // QuickBooks API fetches 100 records at a time
+        let startPosition = 1;
+        const pageSize = 100;
         let allPayments = [];
 
-        // Loop to handle pagination and fetch payments in chunks
         while (true) {
             const query = 
                 "select * from Payment "+
                 "Where Metadata.LastUpdatedTime > '" +latestUpdateTime +
                 "' Order By Metadata.LastUpdatedTime DESC " +
-                "STARTPOSITION " +startPosition + " MAXRESULTS " + pageSize
-            // const query = "select * from Payment Where Metadata.LastUpdatedTime> '2015-01-16'"
+                "STARTPOSITION " +startPosition + " MAXRESULTS " + pageSize;
 
             const response = await oauthClient.makeApiCall({
                 url: `${baseURL}/v3/company/${companyID}/query?query=${encodeURIComponent(query)}`,
@@ -70,7 +87,7 @@ router.get('/payments', async (req, res) => {
                 }
             });
 
-            console.log(response)
+            console.log(response);
 
             const parsedResponse = response.data ? JSON.parse(response.data) : null;
 
@@ -82,44 +99,37 @@ router.get('/payments', async (req, res) => {
             const payments = response?.json?.QueryResponse?.Payment || [];
 
             if (payments.length === 0) {
-                break; // Exit loop if no more payments to fetch
+                break;
             }
 
             const paymentObjects = payments.map((payment, index) => {
-                // Find the OrderNumber dynamically by filtering based on the scope
                 const orderNumber = payment.Line?.[0]?.LineEx?.any?.find(
-                  (item) => item.scope === "javax.xml.bind.JAXBElement$GlobalScope" && item.value?.Name === "txnReferenceNumber"
+                    (item) => item.scope === "javax.xml.bind.JAXBElement$GlobalScope" && item.value?.Name === "txnReferenceNumber"
                 )?.value?.Value || null;
-                console.log(orderNumber)
-                console.log(payment)
             
-                // Only return the payment if the orderNumber is found
                 if (!orderNumber) {
-                  return null; // Return null if OrderNumber is not found
+                    return null;
                 }
             
                 return {
-                  index: index,
-                  PaymentKey: payment.Id,
-                  OrderNumber: orderNumber,
-                  CustomerRef: payment.CustomerRef?.name || null,
-                  PaymentDate: payment.TxnDate || null,
-                  PaymentAmount: parseFloat(payment.TotalAmt) || 0,
-                  PaymentNote: payment.PrivateNote || '',
-                  LastUpdatedTime: payment.MetaData?.LastUpdatedTime || null
+                    index: index,
+                    PaymentKey: payment.Id,
+                    OrderNumber: orderNumber,
+                    CustomerRef: payment.CustomerRef?.name || null,
+                    PaymentDate: payment.TxnDate || null,
+                    PaymentAmount: parseFloat(payment.TotalAmt) || 0,
+                    PaymentNote: payment.PrivateNote || '',
+                    LastUpdatedTime: payment.MetaData?.LastUpdatedTime || null
                 };
-              })
-              .filter(payment => payment !== null);  // Filter out null entries
+            }).filter(payment => payment !== null);
             
             console.log(paymentObjects);
 
             allPayments = allPayments.concat(paymentObjects);
 
-            // Increment startPosition for the next page of results
             startPosition += pageSize;
         }
 
-        // Insert all fetched payments into the database
         await insertPaymentsToDatabase(allPayments);
 
         res.status(200).json({ message: 'Payments successfully imported into the database.' });
