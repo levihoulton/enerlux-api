@@ -70,6 +70,8 @@ router.get('/payments', async (req, res) => {
                 }
             });
 
+            console.log(response)
+
             const parsedResponse = response.data ? JSON.parse(response.data) : null;
 
             if (parsedResponse && parsedResponse.status !== 200) {
