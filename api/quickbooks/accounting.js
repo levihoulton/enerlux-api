@@ -46,9 +46,11 @@ router.get('/callback', async (req, res) => {
 
 router.post('/refresh', async (req, res) => {
     try {
-        console.log("Request Body:", req.body); // Debugging step
+        console.log("Request Body:", req); // Debugging step
 
-        const refreshToken = req.body?.refresh_token || storedRefreshToken;
+        const refreshTokenJSON = JSON.parse(req.body)
+        const refreshToken = refreshTokenJSON.refresh_token || storedRefreshToken;
+
 
         if (!refreshToken) {
             return res.status(400).json({ error: "Refresh token is required" });
