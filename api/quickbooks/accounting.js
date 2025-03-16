@@ -44,21 +44,33 @@ router.get('/callback', async (req, res) => {
     }
 });
 
-router.get('/refresh', async (req, res) => {
+router.post('/refresh', async (req, res) => {
     try {
-        const authResponse = await oauthClient.refreshUsingToken(storedRefreshToken);
-        
+        const refreshToken = req.body.refresh_token || storedRefreshToken;
+
+        if (!refreshToken) {
+            return res.status(400).json({ error: "Refresh token is required" });
+        }
+
+        console.log("Refreshing access token...");
+
+        // Refresh the access token using the received refresh token
+        const authResponse = await oauthClient.refreshUsingToken(refreshToken);
+
+        // Update stored refresh token
         storedRefreshToken = authResponse.token.refresh_token;
-        process.env.REFRESH_TOKEN = storedRefreshToken;
-        
+        process.env.REFRESH_TOKEN = storedRefreshToken; // Store securely in production
+
         console.log("Token refreshed successfully.");
 
+        // Call the payments API after token refresh
         res.redirect('/quickbooks/payments');
     } catch (e) {
         console.error("Error refreshing token:", e);
         res.status(500).json({ error: "Failed to refresh token", details: e.message });
     }
 });
+
 
 router.get('/payments', async (req, res) => {
     try {
